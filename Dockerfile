@@ -1,3 +1,5 @@
+# Last updated: 13 July 2021
+
 FROM dolfinx/dev-env AS dolfinx-with-refinement
 WORKDIR /tmp
 ENV PETSC_ARCH "linux-gnu-real-32"
