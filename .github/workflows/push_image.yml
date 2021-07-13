@@ -1,0 +1,81 @@
+name: Push Docker image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Run DOLFINx tests
+    runs-on: ubuntu-latest
+    container: fenicsproject/test-env:openmpi
+
+    env:
+      CC: clang-10
+      CXX: clang++-10
+
+      PETSC_ARCH: linux-gnu-complex-32
+      OMPI_ALLOW_RUN_AS_ROOT: 1
+      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+      OMPI_MCA_rmaps_base_oversubscribe: 1
+      OMPI_MCA_plm: isolated
+      OMPI_MCA_btl_vader_single_copy_mechanism: none
+      OMPI_MCA_mpi_yield_when_idle: 1
+      OMPI_MCA_hwloc_base_binding_policy: none
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: ./basix
+          repository: FEniCS/basix
+          ref: main
+      - name: Install basix
+        run: |
+          cd basix
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
+          cmake --build build-dir
+          cmake --install build-dir
+          python3 -m pip install ./python
+      - name: Install FEniCS Python components
+        run: |
+          python3 -m pip install git+https://github.com/FEniCS/ufl.git
+          python3 -m pip install git+https://github.com/FEniCS/ffcx.git
+
+      - name: Get DOLFINx
+        uses: actions/checkout@v2
+        with:
+          path: ./dolfinx
+          repository: FEniCS/dolfinx
+          ref: mscroggs/refinement
+      - name: Install DOLFINx
+        run: |
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/
+          cmake --build build
+          cmake --install build
+          python3 -m pip -v install --global-option build --global-option --debug dolfinx/python/
+
+      - name: Run DOLFINx unit tests
+        run: python3 -m pytest -v -n auto dolfinx/python/test/unit
+
+  build-and-publish-docker:
+    name: Build and publish docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: mscroggs/dolfinx-with-refinement
+          target: dolfinx-with-refinement
+    needs: test
