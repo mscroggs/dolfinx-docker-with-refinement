@@ -23,3 +23,6 @@ RUN git clone https://github.com/fenics/dolfinx.git && \
     cd ../python && \
     . /usr/local/lib/dolfinx/dolfinx.conf && \
     pip3 install .
+RUN rm -rf /tmp/*
+
+WORKDIR /root
