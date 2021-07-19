@@ -16,7 +16,7 @@ RUN git clone https://github.com/FEniCS/basix.git && \
     pip3 install git+https://github.com/FEniCS/ffcx.git@4f8f74b2d1c84455b34927f7cc301df681d8f97d --no-cache-dir
 RUN git clone https://github.com/fenics/dolfinx.git && \
     cd dolfinx && \
-    git checkout mscroggs/refinement-old && \
+    git checkout mscroggs/refinement && \
     mkdir build && \
     cd build && \
     cmake -G Ninja ../cpp && \
