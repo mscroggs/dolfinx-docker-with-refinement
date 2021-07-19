@@ -1,4 +1,4 @@
-name: Push Docker image
+name: Test then push Docker image
 
 on:
   push:
@@ -59,7 +59,7 @@ jobs:
         run: python3 -m pytest -v -n auto dolfinx/python/test/unit
 
   build-and-publish-docker:
-    name: Build and publish docker image
+    name: Build and publish Docker image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
