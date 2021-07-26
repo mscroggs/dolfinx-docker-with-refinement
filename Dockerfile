@@ -1,4 +1,4 @@
-# Last updated: 19 July 2021
+# Last updated: 26 July 2021
 
 FROM dolfinx/dev-env AS dolfinx-with-refinement
 WORKDIR /tmp
@@ -10,7 +10,7 @@ RUN git clone https://github.com/FEniCS/basix.git && \
     cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -B build-dir -S .  && \
     cmake --build build-dir --parallel 3 && \
     cmake --install build-dir && \
-    pip3 install -v -e ./python  && \
+    pip3 install ./python  && \
     pip3 install git+https://github.com/FEniCS/ufl.git --no-cache-dir &&\
     pip3 install git+https://github.com/FEniCS/ffcx.git --no-cache-dir
 RUN git clone https://github.com/fenics/dolfinx.git && \
