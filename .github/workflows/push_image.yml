@@ -6,51 +6,6 @@ on:
       - main
 
 jobs:
-  test:
-    name: Run DOLFINx tests
-    runs-on: ubuntu-latest
-    container: fenicsproject/test-env
-
-    env:
-      CC: clang-10
-      CXX: clang++-10
-
-      PETSC_ARCH: linux-gnu-real-32
-
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          path: ./basix
-          repository: FEniCS/basix
-          ref: main
-      - name: Install basix
-        run: |
-          cd basix
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
-          cmake --build build-dir
-          cmake --install build-dir
-          python3 -m pip install ./python
-      - name: Install FEniCS Python components
-        run: |
-          python3 -m pip install git+https://github.com/FEniCS/ufl.git
-          python3 -m pip install git+https://github.com/FEniCS/ffcx.git
-
-      - name: Get DOLFINx
-        uses: actions/checkout@v2
-        with:
-          path: ./dolfinx
-          repository: FEniCS/dolfinx
-          ref: mscroggs/refinement
-      - name: Install DOLFINx
-        run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/
-          cmake --build build
-          cmake --install build
-          python3 -m pip -v install --global-option build --global-option --debug dolfinx/python/
-
-      - name: Run DOLFINx unit tests
-        run: python3 -m pytest -v -n auto dolfinx/python/test/unit
-
   build-and-publish-docker:
     name: Build and publish Docker image
     runs-on: ubuntu-latest
@@ -71,4 +26,20 @@ jobs:
           push: true
           tags: mscroggs/dolfinx-with-refinement
           target: dolfinx-with-refinement
-    needs: test
+
+  test:
+    name: Run DOLFINx tests in new Docker image
+    runs-on: ubuntu-latest
+    container: mscroggs/dolfinx-with-refinement
+
+    steps:
+      - name: Get DOLFINx
+        uses: actions/checkout@v2
+        with:
+          path: ./dolfinx
+          repository: FEniCS/dolfinx
+          ref: mscroggs/refinement
+      - name: Run DOLFINx unit tests
+        run: python3 -m pytest -v -n auto dolfinx/python/test/unit
+
+    needs: build-and-publish-docker
